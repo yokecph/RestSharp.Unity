@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text;
 using System;
+
 namespace RestSharp
 {
     public static class RestSharpExtensions
@@ -43,17 +44,17 @@ namespace RestSharp
         /// <summary>
         /// Returns the error string, if the response was not successful. 
         /// </summary>
-        public static string GetError(this IRestResponse response)
+        public static string GetError(this IRestResponse response, string endPoint = "")
         {
             if (response.IsSuccessful())
                 return string.Empty;
 
             var sb = new StringBuilder();
-            var uri = response.ResponseUri;
+            var uri = string.IsNullOrEmpty(endPoint) ? response.ResponseUri.ToString() : endPoint;
 
-            sb.AppendLine($"Processing request to {uri.AbsolutePath} failed with the following errors:");
+            sb.AppendLine($"REST request {uri} failed with the following errors:");
 
-            if (response.StatusCode.IsSuccess() == false)
+            if (response.StatusCode != 0 && response.StatusCode.IsSuccess() == false)
             {
                 sb.AppendLine($"Server responded with status code {response.StatusCode}");
                 sb.AppendLine($"Description: {response.StatusDescription}");
