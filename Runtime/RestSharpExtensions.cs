@@ -1,13 +1,53 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Text;
-using System;
 
 namespace RestSharp
 {
     public static class RestSharpExtensions
     {
         /// <summary>
-        /// Returns if the Status Code implies success 
+        ///     Returns the error string, if the response was not successful.
+        /// </summary>
+        public static string GetError(this RestResponse response, string endPoint = "")
+        {
+            if (response.IsSuccessful())
+                return string.Empty;
+
+            var sb = new StringBuilder();
+            if (response.ResponseUri != null)
+            {
+                var uri = string.IsNullOrEmpty(endPoint) ? response.ResponseUri.ToString() : endPoint;
+
+                sb.AppendLine($"REST request {uri} failed with the following errors:");
+            }
+
+            if (response.StatusCode != 0 && response.StatusCode.IsSuccess() == false)
+            {
+                sb.AppendLine($"Server responded with status code {response.StatusCode}");
+                sb.AppendLine($"Description: {response.StatusDescription}");
+                sb.AppendLine($"Content: {response.Content}");
+            }
+
+            if (response.ErrorException != null)
+                sb.AppendLine("Exception: " + response.ErrorMessage);
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        ///     Returns a <see cref="RestSharpException" /> exception if the response was not successful
+        /// </summary>
+        public static Exception GetException(this RestResponse response)
+        {
+            return response.IsSuccessful()
+                ? null
+                : new RestSharpException(response.StatusCode, response.ResponseUri, response.Content,
+                    response.GetError(), response.ErrorException);
+        }
+
+        /// <summary>
+        ///     Returns if the Status Code implies success
         /// </summary>
         /// <param name="responseCode"></param>
         /// <returns></returns>
@@ -21,50 +61,13 @@ namespace RestSharp
         }
 
         /// <summary>
-        /// Returns if the response was successful.
+        ///     Returns if the response was successful.
         /// </summary>
         /// <param name="response"></param>
         /// <returns></returns>
-        public static bool IsSuccessful(this IRestResponse response)
+        public static bool IsSuccessful(this RestResponse response)
         {
             return response.StatusCode.IsSuccess() && response.ResponseStatus == ResponseStatus.Completed;
-        }
-
-        /// <summary>
-        /// Returns a <see cref="RestSharpException"/> exception if the response was not successful
-        /// </summary>
-        public static Exception GetException(this IRestResponse response)
-        {
-            return response.IsSuccessful()
-                ? null
-                : new RestSharpException(response.StatusCode, response.ResponseUri, response.Content,
-                    response.GetError(), response.ErrorException);
-        }
-
-        /// <summary>
-        /// Returns the error string, if the response was not successful. 
-        /// </summary>
-        public static string GetError(this IRestResponse response, string endPoint = "")
-        {
-            if (response.IsSuccessful())
-                return string.Empty;
-
-            var sb = new StringBuilder();
-            var uri = string.IsNullOrEmpty(endPoint) ? response.ResponseUri.ToString() : endPoint;
-
-            sb.AppendLine($"REST request {uri} failed with the following errors:");
-
-            if (response.StatusCode != 0 && response.StatusCode.IsSuccess() == false)
-            {
-                sb.AppendLine($"Server responded with status code {response.StatusCode}");
-                sb.AppendLine($"Description: {response.StatusDescription}");
-                sb.AppendLine($"Content: {response.Content}");
-            }
-
-            if (response.ErrorException != null)
-                sb.AppendLine("Exception: " + response.ErrorMessage);
-
-            return sb.ToString();
         }
     }
 }
