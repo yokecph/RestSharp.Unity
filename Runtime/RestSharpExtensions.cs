@@ -9,18 +9,17 @@ namespace RestSharp
         /// <summary>
         ///     Returns the error string, if the response was not successful.
         /// </summary>
-        public static string GetError(this RestResponse response, string endPoint = "")
+        public static string GetError(this IRestResponse response, string endPoint = "")
         {
             if (response.IsSuccessful())
                 return string.Empty;
 
             var sb = new StringBuilder();
-            if (response.ResponseUri != null)
-            {
-                var uri = string.IsNullOrEmpty(endPoint) ? response.ResponseUri.ToString() : endPoint;
 
-                sb.AppendLine($"REST request {uri} failed with the following errors:");
-            }
+            var uri = string.IsNullOrEmpty(endPoint) ? response.ResponseUri.ToString() : endPoint;
+
+            sb.AppendLine($"REST request {uri} failed with the following errors:");
+
 
             if (response.StatusCode != 0 && response.StatusCode.IsSuccess() == false)
             {
@@ -38,7 +37,7 @@ namespace RestSharp
         /// <summary>
         ///     Returns a <see cref="RestSharpException" /> exception if the response was not successful
         /// </summary>
-        public static Exception GetException(this RestResponse response)
+        public static Exception GetException(this IRestResponse response)
         {
             return response.IsSuccessful()
                 ? null
@@ -65,7 +64,7 @@ namespace RestSharp
         /// </summary>
         /// <param name="response"></param>
         /// <returns></returns>
-        public static bool IsSuccessful(this RestResponse response)
+        public static bool IsSuccessful(this IRestResponse response)
         {
             return response.StatusCode.IsSuccess() && response.ResponseStatus == ResponseStatus.Completed;
         }
